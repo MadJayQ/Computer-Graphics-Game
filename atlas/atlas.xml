@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<atlas>
+    <header>
+        <name>Texture Atlas</name>
+        <author>Jake Thornton</author>
+        <padding-x>5</padding-x>
+        <padding-y>0</padding-y>
+        <source>images/atlas.png</source>
+    </header>
+    <sprite>
+        <name>Player</name>
+        <row>0</row>
+        <col>0</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+    <sprite>
+        <name>Collision</name>
+        <row>0</row>
+        <col>1</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+    <sprite>
+        <name>Floor</name>
+        <row>0</row>
+        <col>2</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+</atlas>
