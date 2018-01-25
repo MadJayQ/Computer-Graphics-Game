@@ -3,7 +3,10 @@
     <head>
         <link rel="stylesheet" type="text/css" href="css/style.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="js/easystarmin.js"></script>
         <script src="js/globalvars.js"></script>
+        <script src="js/textureatlas.js"></script>
+        <script src="js/tilemap.js"></script>
         <script src="js/math.js"></script>
         <script src="js/vector.js"></script>
         <script src="js/game.js"></script>
@@ -11,6 +14,9 @@
         <script language="JavaScript">
             function interpUpdate(cb) {
                 game.interpolate = cb.checked;
+            }
+            function drawgridUpdate(cb) {
+                game.drawgrid = cb.checked;
             }
         </script>
     </head>
@@ -21,16 +27,9 @@
             </section>
         </article>
         <div id="gameContainer">
-            <canvas id="gameCanvas">
+            <canvas id="gameCanvas" onclick="game.onCanvasClick(event)">
                 Unsupported Browser!
             </canvas>
-            <script language="JavaScript">
-                var game = new Game();
-                $(document).ready(function(){
-                    Canvas.getInstance().setSize(512, 512);
-                    game.loop();
-                });
-            </script>
             <aside id="about">
                 Click to move<br>
                 By Jake Thornton<br>
@@ -41,7 +40,18 @@
         <div id="debugContainer" style="border: 1px solid white">
             <div>Debug Controls</div><br>
             <input type="checkbox" id="interpolationCb" checked="game.interpolate" onclick='interpUpdate(this);'>
-            <label class="debugControl" for="interpolationCb">Interpolation</label>
+            <label class="debugControl" for="interpolationCb">Interpolation</label><br>
+            <input type="checkbox" id="drawgridCb" checked="game.drawgrid" onclick ='game.drawgrid = this.checked;'>
+            <label class="debugControl" for="drawgridCb">Draw Grid</label><br>
+            <input type="checkbox" id="showstatsCb" checked="game.drawstats" onclick ='game.drawstats = this.checked;'>
+            <label class="debugControl" for="showstatsCb">Draw Stats</label><br>
         </div>
+        <script language="JavaScript">
+            var game = new Game();
+            $(document).ready(function(){
+                Canvas.getInstance().setSize(512, 512);
+                game.loop();
+            });
+        </script>
     </body>
 </html>

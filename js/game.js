@@ -1,8 +1,10 @@
+
 class GameObject {
-    constructor(pos, texture) {
+    constructor(pos, texture, owner) {
         this.pos = pos;
         this.lastpos = pos;
         this.texture = texture;
+        this.owner = owner;
     }
 
     tick(dt) {
@@ -10,8 +12,8 @@ class GameObject {
     }
 };
 class Player extends GameObject {
-    constructor(pos, texture) {
-        super(pos, texture);
+    constructor(pos, texture, owner) {
+        super(pos, texture, owner);
         this.prototype = {
             tick: (dt) => this.tick(dt)
         };
@@ -21,90 +23,81 @@ class Player extends GameObject {
         this.lastx = 0;
         this.lasty = 0;
         this.walkspeed = 300;
+        this.targettile = new Vector2D(1, 1);
+        this.path = [];
     }
 
     tick(dt) {
-        this.lastx = this.x;
-        this.lasty = this.y;
-        this.x += this.walkspeed * dt;
-        this.y += this.walkspeed * dt;
+        this.lastpos = new Vector2D(this.pos.x, this.pos.y);
+        if(this.path.length > 0) {
+            this.pos = new Vector2D(
+                this.path[0].x * 32,
+                this.path[0].y * 32
+            );
+            this.path = this.path.slice(1);
+        }
+        //console.log(this.targettile);
     }
-};
-class Texture {
-    constructor(row, col, sizex, sizey) {
-        this.row = row;
-        this.col = col;
-        this.sizex = sizex;
-        this.sizey = sizey;
-        this.texture = new ImageData(60, 60);
-    }
-    setTexture(texture) {
-        this.texture = texture;
-    }
-};
-class TextureAtlas
-{
-    constructor(src) 
-    {
+
+    onClick(x, y) {
+        var xtile = Math.floor(x / 32);
+        var ytile = Math.floor(y / 32);
+        this.targettile = new Vector2D(
+            xtile,
+            ytile
+        );
+
+        var currenttile = new Vector2D(
+            Math.floor(this.pos.x / 32),
+            Math.floor(this.pos.y / 32)
+        );
+
         var self = this;
-        console.log("Requesting: " + src);
-        this.source = new Image();
-        this.textureMap = {};
-        this.paddingx = 0;
-        this.paddingy = 0;
-        this.loadedtextures = 0;
-        this.expectedtextures = 0;
-        $.ajax({
-            url: src,
-            success: function (data){
-                self.paddingx = ($($(data).find("header")).find("padding-x").text());
-                self.paddingy = $($(data).find("header")).find("padding-y").text();
-                var src = $($(data).find("header")).find("source").text();
-                var textureMap = {};
-                $(data).find("sprite").each(function(){
-                    var name = $(this).find("name").text();
-                    var row = $(this).find("row").text();
-                    var col = $(this).find("col").text();
-                    var sizex = $(this).find("sizex").text();
-                    var sizey = $(this).find("sizey").text();   
-                    var texture = new Texture(row, col, sizex, sizey);
-                    self.expectedtextures++;
-                    self.textureMap[name] = texture;
-                });
-                /*
-                    Okay so this is really hacky, but whatever 
-                    I'm going to create a canvas element in memory
-                    Load my atlas into the memory through the canvas context
-                    Then grab subimages of my sprites...what???
-                */
-                var canvas = document.createElement("canvas");
-                var ctx = canvas.getContext("2d");
-                self.source.src = src;
-                self.source.onload = function() {
-                    ctx.drawImage(self.source, 0, 0);
-                    for(var key in self.textureMap) {
-                        var texture = self.textureMap[key];
-                        var srcx = texture.col;
-                        var srcy = texture.row;
-                        texture.texture = ctx.getImageData(0,0, 60, 60);
-                        self.loadedtextures++;
-                    }
-                };
-            },
-            error: function(msg) {
-                console.error(src + " not found");
-            }
-        });
+        if(currenttile.x != this.targettile.x || currenttile.y != this.targettile.y) {
+            this.owner.pathfinder.findPath(currenttile.x, currenttile.y, this.targettile.x, this.targettile.y, function(path) {
+                if(path === null) {
+                    console.log("PATH NOT FOUND");
+                } else {
+                    self.path = path.slice(1);
+                }
+            });
+            this.owner.pathfinder.calculate();
+        }
+
     }
 };
+
 class Game {
     constructor() {
         this.atlas = new TextureAtlas("atlas/atlas.xml");
         var ctx = document.getElementById("gameCanvas").getContext("2d");
         this.initialized = false;
         this.interpolate = true;
+        this.drawgrid = true;
+        this.drawstats = true;
+        this.player = new Player(new Vector2D(32, 32), this.atlas.textureMap["Player"], this);
 
-        this.player = new Player(new Vector2D(0, 0), this.atlas.textureMap["Player"]);
+        this.tilemap = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+        this.pathfinder = new EasyStar.js();
+        this.pathfinder.setGrid(this.tilemap);
+        this.pathfinder.setAcceptableTiles([0]);
     }
 
     getTimeStamp() {
@@ -113,12 +106,10 @@ class Game {
 
     loop() {
         requestAnimationFrame(() => this.loop());
-
         if(this.atlas.expectedtextures != this.atlas.loadedtextures) return;
         if(this.atlas.textureMap["Player"] == undefined) return;
 
         var globals = GlobalVars.getInstance();
-        globals.setTickrate(16);
         if(this.initialized == false) {
             this.initialized = true;
             this.start = Date.now();
@@ -133,7 +124,7 @@ class Game {
         /*
             HACK HACK HACK!
             JavaScript timing is kinda awkward
-            The timer starts kind of desynched so if too many ticks have accumulated 
+            The timer starts kind of desynced so if too many ticks have accumulated 
             lets go ahead and ignore them.
         */
         var estimatedticks = Math.ceil(globals.frametime / targettime);
@@ -151,31 +142,73 @@ class Game {
         globals.framecount++;
         globals.curtime = time;
         globals.interpolation = globals.frametime / targettime;
+
+        var framestart = Date.now();
         this.render();
+        var frameend = Date.now();
+        globals.framedelay = (frameend - framestart) / 1000;
+        //console.log("Delay: " + 1 / globals.framedelay);
 
     }
 
+    constructPath(src, dst) {
+
+    }
+
+    onCanvasClick(event) {
+        this.player.onClick(event.offsetX, event.offsetY);
+    }
     tick(dt) {
         this.player.tick(dt);
     }
 
+    drawGrid(width, height) {
+        var cwidth = Canvas.getInstance().getWidth();
+        var cheight = Canvas.getInstance().getHeight();
+
+        for(var row = 1; row < Math.floor(cheight / height); row++) {
+            Canvas.getInstance().drawLine(0, row * height, cwidth, row * height, "#fff");
+        }
+        for(var col = 1; col < Math.floor(cwidth / width); col++) {
+            Canvas.getInstance().drawLine(col * height, 0, col * height, cheight, "#fff");
+        }
+    }
+    drawStats() {
+
+    }
     render() {
         var canvas = Canvas.getInstance();
         canvas.clear("#FFF");
         var absx = MathHelper.getInstance().lerp(
-            this.player.lastx,
-            this.player.x, 
+            this.player.lastpos.x,
+            this.player.pos.x, 
             GlobalVars.getInstance().interpolation
         );
         var absy = MathHelper.getInstance().lerp(
-            this.player.lasty,
-            this.player.y,
+            this.player.lastpos.y,
+            this.player.pos.y,
             GlobalVars.getInstance().interpolation
         );
+        for(var x = 0; x < this.tilemap.length; x++) {
+            for(var y = 0; y < this.tilemap[x].length; y++) {
+                canvas.drawTexture(
+                    (this.tilemap[x][y] == 0) ? this.atlas.textureMap["Floor"] : this.atlas.textureMap["Collision"],
+                    x * 32,
+                    y * 32
+                )
+            }
+        }
         canvas.drawTexture(
             this.atlas.textureMap["Player"],
-            (this.interpolate) ? absx : this.player.x,
-            (this.interpolate) ? absy : this.player.y
+            (this.interpolate) ? absx : this.player.pos.x,
+            (this.interpolate) ? absy : this.player.pos.y
         );
+
+        if(this.drawgrid) {
+            this.drawGrid(32, 32);
+        }
+        if(this.drawstats) {
+            this.drawStats();
+        }
     }
 };

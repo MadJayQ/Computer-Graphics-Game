@@ -15,6 +15,22 @@ class _Canvas_
         this.canvas.height = height;
     }
 
+    getWidth() { 
+        return this.canvas.width;
+    }
+
+    getHeight() { 
+        return this.canvas.height;
+    }
+
+    drawLine(x0, y0, x1, y1, color) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(x0, y0);
+        this.ctx.lineTo(x1, y1);
+        this.ctx.strokeStyle = color;
+        this.ctx.stroke();
+    }
+
     drawTexture(tex, x, y) {
         this.ctx.putImageData(tex.texture, x, y);
     }

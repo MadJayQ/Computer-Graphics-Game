@@ -3,6 +3,8 @@
     <header>
         <name>Texture Atlas</name>
         <author>Jake Thornton</author>
+        <tilewidth>32</tilewidth>
+        <tileheight>32</tileheight>
         <padding-x>5</padding-x>
         <padding-y>0</padding-y>
         <source>images/atlas.png</source>
@@ -25,6 +27,13 @@
         <name>Floor</name>
         <row>0</row>
         <col>2</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+    <sprite>
+        <name>Enemy</name>
+        <row>0</row>
+        <col>3</col>
         <sizex>1</sizex>
         <sizey>1</sizey>
     </sprite>
