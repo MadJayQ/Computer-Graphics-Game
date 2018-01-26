@@ -2,7 +2,7 @@ class _GlobalVars_
 {
     constructor()
     {
-        this.tickrate = 64;
+        this.tickrate = 30;
         this.tickinterval = 1 / this.tickrate;
         this.frametime = 0;
         this.interpolation = 0;
@@ -11,6 +11,7 @@ class _GlobalVars_
         this.framecount = 0;
         this.lasttime = 0;
         this.framedelay = 0;
+        this.gamestate = 1;
     }
 
     setTickrate(tickrate) {

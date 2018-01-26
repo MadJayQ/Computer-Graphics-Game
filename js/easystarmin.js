@@ -80,7 +80,8 @@ var EasyStar =
 	    var instanceQueue = [];
 	    var iterationsPerCalculation = Number.MAX_VALUE;
 	    var acceptableTiles;
-	    var diagonalsEnabled = false;
+		var diagonalsEnabled = false;
+		var calculationFinishedCallback = function(){};
 
 	    /**
 	    * Sets the collision grid that EasyStar uses.
@@ -126,7 +127,11 @@ var EasyStar =
 	     */
 	    this.disableDiagonals = function () {
 	        diagonalsEnabled = false;
-	    };
+		};
+		
+		this.setCalculateCallback = function(func) { 
+			calculationFinishedCallback = func;
+		}
 
 	    /**
 	    * Sets the collision grid that EasyStar uses.
@@ -465,7 +470,8 @@ var EasyStar =
 	                    }
 	                }
 	            }
-	        }
+			}
+			calculationFinishedCallback();
 	    };
 
 	    // Private methods follow

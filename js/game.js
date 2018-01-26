@@ -10,6 +10,24 @@ class GameObject {
     tick(dt) {
 
     }
+
+    getAbsolutePosition() {
+        var absx = MathHelper.getInstance().lerp(
+            this.lastpos.x,
+            this.pos.x, 
+            GlobalVars.getInstance().interpolation
+        );
+        var absy = MathHelper.getInstance().lerp(
+            this.lastpos.y,
+            this.pos.y,
+            GlobalVars.getInstance().interpolation
+        );
+
+        return new Vector2D(
+            absx,
+            absy
+        );
+    }
 };
 
 class Enemy extends GameObject {
@@ -18,9 +36,11 @@ class Enemy extends GameObject {
         this.prototype = {
             tick: (dt) => this.tick(dt)
         };
-        this.texture = super.texture;
-        var spawnx = MathHelper.getInstance().generateRandom(1, this.owner.mapsize.x - 1);
-        var spawny = MathHelper.getInstance().generateRandom(1, this.owner.mapsize.y - 1);
+        this.texture = texture;
+        var spawnx = MathHelper.getInstance().generateRandom(1, this.owner.mapsize.x - 2);
+        var spawny = MathHelper.getInstance().generateRandom(1, this.owner.mapsize.y - 2);
+
+        console.log(this.owner);
         this.pos = new Vector2D(
             spawnx * this.owner.tilesize.x,
             spawny * this.owner.tilesize.y
@@ -30,10 +50,68 @@ class Enemy extends GameObject {
             this.pos.x,
             this.pos.y 
         );
+        this.selectedtile = false;
+        this.targettile = new Vector2D(0, 0);
+        this.walkspeed = 500;
+        this.path = [];
     }
 
     tick(dt) {
-        
+        if(GlobalVars.getInstance().gamestate == 1) return;
+        this.lastpos = new Vector2D(this.pos.x, this.pos.y);
+        if(this.selectedtile == false) {
+            this.targettile = new Vector2D(
+                MathHelper.getInstance().generateRandom(1, this.owner.mapsize.x - 2),
+                MathHelper.getInstance().generateRandom(1, this.owner.mapsize.y - 2),
+            );
+            var currenttile = new Vector2D(
+                Math.floor(this.pos.x / 32),
+                Math.floor(this.pos.y / 32)
+            );
+    
+            var self = this;
+            if(currenttile.x != this.targettile.x || currenttile.y != this.targettile.y) {
+                this.owner.pathfinder.findPath(currenttile.x, currenttile.y, this.targettile.x, this.targettile.y, function(path) {
+                    if(path === null) {
+                        console.log("PATH NOT FOUND");
+                    } else {
+                        self.path = path.slice(1);
+                    }
+                });
+                this.owner.pathfinder.calculate();
+                this.selectedtile = true;
+            }
+        } else {
+            console.log("YO");
+            if(this.path.length > 0) {
+                var velocity = new Vector2D(
+                    ((this.path[0].x * 32) - this.pos.x) / dt,
+                    ((this.path[0].y * 32) - this.pos.y) / dt
+                );
+    
+                if(velocity.length() > this.walkspeed) {
+                    velocity.normalizeInPlace();
+                    velocity = new Vector2D(
+                        Math.floor(velocity.x * this.walkspeed),
+                        Math.floor(velocity.y * this.walkspeed)
+                    )
+                }
+    
+                this.pos = new Vector2D(
+                    this.pos.x + velocity.x * dt,
+                    this.pos.y + velocity.y * dt 
+                )
+    
+                if(this.pos.x == (this.path[0].x * 32) && this.pos.y == (this.path[0].y * 32)) {
+                    this.path = this.path.slice(1);
+                    if(this.path.length == 0) {
+                        GlobalVars.getInstance().gamestate = 1;
+                        this.lastpos = new Vector2D(this.pos.x, this.pos.y);
+                        this.selectedtile = false;
+                    }
+                }    
+            }
+        }
     }
 }
 class Player extends GameObject {
@@ -42,9 +120,6 @@ class Player extends GameObject {
         this.prototype = {
             tick: (dt) => console.log("tick")
         };
-        this.texture = texture;
-        console.log(texture);
-
         this.x = 0;
         this.y = 0;
         this.lastx = 0;
@@ -55,6 +130,7 @@ class Player extends GameObject {
     }
 
     tick(dt) {
+        if(GlobalVars.getInstance().gamestate == 0) return;
         this.lastpos = new Vector2D(this.pos.x, this.pos.y);
         if(this.path.length > 0) {
             var velocity = new Vector2D(
@@ -63,15 +139,12 @@ class Player extends GameObject {
             );
 
             if(velocity.length() > this.walkspeed) {
-                console.log(velocity);
                 velocity.normalizeInPlace();
-                console.log(velocity);
                 velocity = new Vector2D(
                     Math.floor(velocity.x * this.walkspeed),
                     Math.floor(velocity.y * this.walkspeed)
                 )
             }
-            //console.log(this.path[0].x * 32);
 
             this.pos = new Vector2D(
                 this.pos.x + velocity.x * dt,
@@ -79,12 +152,13 @@ class Player extends GameObject {
             )
 
             if(this.pos.x == (this.path[0].x * 32) && this.pos.y == (this.path[0].y * 32)) {
-
                 this.path = this.path.slice(1);
+                if(this.path.length == 0) {
+                    GlobalVars.getInstance().gamestate = 0;
+                    this.lastpos = new Vector2D(this.pos.x, this.pos.y);
+                }
             }    
-            console.log(velocity.length());
         }
-        //console.log(this.targettile);
     }
 
     onClick(x, y) {
@@ -123,22 +197,28 @@ class Game {
         this.interpolate = true;
         this.drawgrid = true;
         this.drawstats = true;
-        this.tilesize = new Vector2D(
-            this.atlas.tilesizex,
-            this.atlas.tilesizey,
-        );
-        this.mapsize = new Vector2D(
-            Canvas.getInstance().getWidth() / this.tilesize.x,
-            Canvas.getInstance().getHeight() / this.tilesize.y
-        );
         var clone = function(object) { return $.extend(true, {}, object) };
         //console.log(this.atlas.textureMap["Player"]);
-        var texture = this.atlas.textureMap5;
-        console.log(texture);
 
         var self = this;
         this.atlas.onsuccesscallback = () => {
-            self.player = new Player(new Vector2D(32, 32), self.atlas.textureMap["Player"], self);
+            this.tilesize = new Vector2D(
+                this.atlas.tilesizex,
+                this.atlas.tilesizey,
+            );
+            this.mapsize = new Vector2D(
+                Canvas.getInstance().getWidth() / this.tilesize.x,
+                Canvas.getInstance().getHeight() / this.tilesize.y
+            );
+            self.player = new Player(new Vector2D(32, 32), self.atlas.textureMap["Player"], clone(self));
+            self.enemies = new Array(MathHelper.getInstance().generateRandom(1,1));
+            for(var i = 0; i < self.enemies.length; i++) {
+                self.enemies[i] = new Enemy(
+                    new Vector2D(0, 0),
+                    self.atlas.textureMap["Enemy" + MathHelper.getInstance().generateRandom(0, 6)],
+                    clone(self)
+                );
+            }
         };
 
         this.tilemap = [
@@ -159,27 +239,17 @@ class Game {
             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ];
-
-        this.enemies = new Array(MathHelper.getInstance().generateRandom(5,6));
-        for(var i = 0; i < this.enemies.length; i++) {
-            this.enemies[i] = new Enemy(
-                new Vector2D(0, 0),
-                this.atlas.textureMap["Enemy" + MathHelper.getInstance().generateRandom(0, 6)],
-                this
-            );
-        }
         this.pathfinder = new EasyStar.js();
         this.pathfinder.setGrid(this.tilemap);
         this.pathfinder.setAcceptableTiles([0]);
+        this.pathfinder.setIterationsPerCalculation(1000);
+        this.pathfinder.enableSync();
+        this.pathfinder.enableDiagonals();
+        this.pathfinder.enableCornerCutting();
     }
 
     getTimeStamp() {
         return Date.now() - this.start;
-    }
-
-    getTileTexture(name) { 
-        console.log("YO: " + this.atlas.textureMap[name]);
-        return this.atlas.textureMap[name];
     }
 
     loop() {
@@ -233,6 +303,7 @@ class Game {
     }
     tick(dt) {
         this.player.tick(dt);
+        this.enemies.forEach(function(item, index, array) { item.tick(dt); });
     }
 
     drawGrid(width, height) {
@@ -273,9 +344,19 @@ class Game {
         }
         canvas.drawTexture(
             this.player.texture,
-            (this.interpolate) ? Math.round(absx) : this.player.pos.x,
-            (this.interpolate) ? Math.round(absy) : this.player.pos.y
+            (this.interpolate) ? Math.round(this.player.getAbsolutePosition().x) : this.player.pos.x,
+            (this.interpolate) ? Math.round(this.player.getAbsolutePosition().y) : this.player.pos.y
         );
+
+        var self = this;
+        this.enemies.forEach(function (item, index, array) {
+            var enemy = item;
+            canvas.drawTexture(
+                enemy.texture,
+                (self.interpolate) ? Math.round(enemy.getAbsolutePosition().x) : enemy.pos.x,
+                (self.interpolate) ? Math.round(enemy.getAbsolutePosition().y) : enemy.pos.y
+            );
+        });
         
         if(this.drawgrid) {
             this.drawGrid(32, 32);
