@@ -5,14 +5,14 @@
         <author>Jake Thornton</author>
         <tilewidth>32</tilewidth>
         <tileheight>32</tileheight>
-        <padding-x>5</padding-x>
+        <padding-x>0</padding-x>
         <padding-y>0</padding-y>
         <source>images/atlas.png</source>
     </header>
     <sprite>
         <name>Player</name>
-        <row>0</row>
-        <col>0</col>
+        <row>1</row>
+        <col>1</col>
         <sizex>1</sizex>
         <sizey>1</sizey>
     </sprite>
@@ -31,9 +31,51 @@
         <sizey>1</sizey>
     </sprite>
     <sprite>
-        <name>Enemy</name>
+        <name>Enemy0</name>
         <row>0</row>
         <col>3</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+        <sprite>
+        <name>Enemy1</name>
+        <row>0</row>
+        <col>4</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+    <sprite>
+        <name>Enemy2</name>
+        <row>0</row>
+        <col>5</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+    <sprite>
+        <name>Enemy3</name>
+        <row>0</row>
+        <col>6</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+    <sprite>
+        <name>Enemy4</name>
+        <row>0</row>
+        <col>7</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+    <sprite>
+        <name>Enemy5</name>
+        <row>1</row>
+        <col>5</col>
+        <sizex>1</sizex>
+        <sizey>1</sizey>
+    </sprite>
+    <sprite>
+        <name>Enemy6</name>
+        <row>1</row>
+        <col>6</col>
         <sizex>1</sizex>
         <sizey>1</sizey>
     </sprite>

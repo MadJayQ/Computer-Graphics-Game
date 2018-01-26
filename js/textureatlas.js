@@ -24,6 +24,7 @@ class TextureAtlas
         this.tilesizey = 0;
         this.loadedtextures = 0;
         this.expectedtextures = 0;
+        this.onsuccesscallback = function(){};
         $.ajax({
             url: src,
             success: function (data){
@@ -61,6 +62,7 @@ class TextureAtlas
                         texture.texture = ctx.getImageData(srcx,srcy, self.tilesizex, self.tilesizey);
                         self.loadedtextures++;
                     }
+                    self.onsuccesscallback();
                 };
             },
             error: function(msg) {

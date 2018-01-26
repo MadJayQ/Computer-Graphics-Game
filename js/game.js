@@ -11,18 +11,45 @@ class GameObject {
 
     }
 };
-class Player extends GameObject {
+
+class Enemy extends GameObject {
     constructor(pos, texture, owner) {
         super(pos, texture, owner);
         this.prototype = {
             tick: (dt) => this.tick(dt)
         };
+        this.texture = super.texture;
+        var spawnx = MathHelper.getInstance().generateRandom(1, this.owner.mapsize.x - 1);
+        var spawny = MathHelper.getInstance().generateRandom(1, this.owner.mapsize.y - 1);
+        this.pos = new Vector2D(
+            spawnx * this.owner.tilesize.x,
+            spawny * this.owner.tilesize.y
+        );
+
+        this.lastpos = new Vector2D(
+            this.pos.x,
+            this.pos.y 
+        );
+    }
+
+    tick(dt) {
+        
+    }
+}
+class Player extends GameObject {
+    constructor(pos, texture, owner) {
+        super(pos, texture, owner);
+        this.prototype = {
+            tick: (dt) => console.log("tick")
+        };
+        this.texture = texture;
+        console.log(texture);
 
         this.x = 0;
         this.y = 0;
         this.lastx = 0;
         this.lasty = 0;
-        this.walkspeed = 300;
+        this.walkspeed = 350;
         this.targettile = new Vector2D(1, 1);
         this.path = [];
     }
@@ -30,11 +57,32 @@ class Player extends GameObject {
     tick(dt) {
         this.lastpos = new Vector2D(this.pos.x, this.pos.y);
         if(this.path.length > 0) {
-            this.pos = new Vector2D(
-                this.path[0].x * 32,
-                this.path[0].y * 32
+            var velocity = new Vector2D(
+                ((this.path[0].x * 32) - this.pos.x) / dt,
+                ((this.path[0].y * 32) - this.pos.y) / dt
             );
-            this.path = this.path.slice(1);
+
+            if(velocity.length() > this.walkspeed) {
+                console.log(velocity);
+                velocity.normalizeInPlace();
+                console.log(velocity);
+                velocity = new Vector2D(
+                    Math.floor(velocity.x * this.walkspeed),
+                    Math.floor(velocity.y * this.walkspeed)
+                )
+            }
+            //console.log(this.path[0].x * 32);
+
+            this.pos = new Vector2D(
+                this.pos.x + velocity.x * dt,
+                this.pos.y + velocity.y * dt 
+            )
+
+            if(this.pos.x == (this.path[0].x * 32) && this.pos.y == (this.path[0].y * 32)) {
+
+                this.path = this.path.slice(1);
+            }    
+            console.log(velocity.length());
         }
         //console.log(this.targettile);
     }
@@ -75,7 +123,23 @@ class Game {
         this.interpolate = true;
         this.drawgrid = true;
         this.drawstats = true;
-        this.player = new Player(new Vector2D(32, 32), this.atlas.textureMap["Player"], this);
+        this.tilesize = new Vector2D(
+            this.atlas.tilesizex,
+            this.atlas.tilesizey,
+        );
+        this.mapsize = new Vector2D(
+            Canvas.getInstance().getWidth() / this.tilesize.x,
+            Canvas.getInstance().getHeight() / this.tilesize.y
+        );
+        var clone = function(object) { return $.extend(true, {}, object) };
+        //console.log(this.atlas.textureMap["Player"]);
+        var texture = this.atlas.textureMap5;
+        console.log(texture);
+
+        var self = this;
+        this.atlas.onsuccesscallback = () => {
+            self.player = new Player(new Vector2D(32, 32), self.atlas.textureMap["Player"], self);
+        };
 
         this.tilemap = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -95,6 +159,15 @@ class Game {
             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ];
+
+        this.enemies = new Array(MathHelper.getInstance().generateRandom(5,6));
+        for(var i = 0; i < this.enemies.length; i++) {
+            this.enemies[i] = new Enemy(
+                new Vector2D(0, 0),
+                this.atlas.textureMap["Enemy" + MathHelper.getInstance().generateRandom(0, 6)],
+                this
+            );
+        }
         this.pathfinder = new EasyStar.js();
         this.pathfinder.setGrid(this.tilemap);
         this.pathfinder.setAcceptableTiles([0]);
@@ -102,6 +175,11 @@ class Game {
 
     getTimeStamp() {
         return Date.now() - this.start;
+    }
+
+    getTileTexture(name) { 
+        console.log("YO: " + this.atlas.textureMap[name]);
+        return this.atlas.textureMap[name];
     }
 
     loop() {
@@ -150,11 +228,6 @@ class Game {
         //console.log("Delay: " + 1 / globals.framedelay);
 
     }
-
-    constructPath(src, dst) {
-
-    }
-
     onCanvasClick(event) {
         this.player.onClick(event.offsetX, event.offsetY);
     }
@@ -199,11 +272,11 @@ class Game {
             }
         }
         canvas.drawTexture(
-            this.atlas.textureMap["Player"],
-            (this.interpolate) ? absx : this.player.pos.x,
-            (this.interpolate) ? absy : this.player.pos.y
+            this.player.texture,
+            (this.interpolate) ? Math.round(absx) : this.player.pos.x,
+            (this.interpolate) ? Math.round(absy) : this.player.pos.y
         );
-
+        
         if(this.drawgrid) {
             this.drawGrid(32, 32);
         }

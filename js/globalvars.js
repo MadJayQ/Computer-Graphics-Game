@@ -2,7 +2,7 @@ class _GlobalVars_
 {
     constructor()
     {
-        this.tickrate = 15;
+        this.tickrate = 64;
         this.tickinterval = 1 / this.tickrate;
         this.frametime = 0;
         this.interpolation = 0;
