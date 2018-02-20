@@ -1,3 +1,11 @@
+var GameStates = {
+    PLAYER_MOVE: 0,
+    ENEMY_THINK: 1,
+    ENEMY_EXEC: 2,
+    PLAYER_ATTACK: 3,
+    ENEMY_ATTACK: 4,
+};
+
 class _GlobalVars_
 {
     constructor()
@@ -11,12 +19,19 @@ class _GlobalVars_
         this.framecount = 0;
         this.lasttime = 0;
         this.framedelay = 0;
-        this.gamestate = 1;
+        this.gamestate = GameStates.PLAYER_MOVE;
+        this.nextgamestate = GameStates.PLAYER_MOVE;
+        this.timescale = 1.0;
+        this.nextturntime = 0.0;
     }
 
     setTickrate(tickrate) {
         this.tickrate = tickrate;
         this.tickinterval = 1 / tickrate;
+    }
+
+    getTickCurtime() {
+        return this.tickcount * this.tickinterval;
     }
 };
 
